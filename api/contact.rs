@@ -1,14 +1,14 @@
-use serde_json::{Value, json};
-use vercel_runtime::{Error, Request, run, service_fn};
+use axum::{Router, routing::post};
+use tower::ServiceBuilder;
+use vercel_runtime::axum::VercelLayer;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
-    let service = service_fn(handler);
-    run(service).await
-}
+async fn main() -> Result<(), vercel_runtime::Error> {
+    let router = Router::new().route("/", post(backend::api::contact::handler));
 
-async fn handler(_req: Request) -> Result<Value, Error> {
-    Ok(json!({
-        "message": "Hello, world!",
-    }))
+    let app = ServiceBuilder::new()
+        .layer(VercelLayer::new())
+        .service(router);
+
+    vercel_runtime::run(app).await
 }
