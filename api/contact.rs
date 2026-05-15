@@ -1,4 +1,5 @@
 use axum::{Router, routing::post};
+use backend::cors::cors_layer;
 use tower::ServiceBuilder;
 use vercel_runtime::axum::VercelLayer;
 
@@ -8,6 +9,7 @@ async fn main() -> Result<(), vercel_runtime::Error> {
 
     let app = ServiceBuilder::new()
         .layer(VercelLayer::new())
+        .layer(cors_layer())
         .service(router);
 
     vercel_runtime::run(app).await
