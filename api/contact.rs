@@ -4,7 +4,7 @@ use vercel_runtime::axum::VercelLayer;
 
 #[tokio::main]
 async fn main() -> Result<(), vercel_runtime::Error> {
-    let router = Router::new().route("/", post(backend::api::contact::handler));
+    let router = Router::new().fallback(post(backend::api::contact::handler));
 
     let app = ServiceBuilder::new()
         .layer(VercelLayer::new())
