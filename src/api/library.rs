@@ -2,6 +2,7 @@ use std::{
     sync::LazyLock,
     time::{Duration, Instant},
 };
+use tracing::info;
 
 use axum::{
     Json,
@@ -36,6 +37,7 @@ struct Cache {
 // Store the global cache in a lazy lock-protected RwLock.
 static CACHE: LazyLock<RwLock<Option<Cache>>> = LazyLock::new(|| RwLock::new(None));
 
+#[tracing::instrument]
 pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
     // If the last call to the Sheets API was within the TTL deadline,
     // return the cached results.
@@ -47,10 +49,12 @@ pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
         if let Some(entry) = &*guard
             && entry.fetched_at.elapsed() < CACHE_TTL
         {
+            info!("serving {} items from cache", entry.items.len());
             return Ok(Json(entry.items.clone()));
         }
     }
 
+    info!("fetching items from Google Sheets");
     let items = fetch_library_items().await?;
 
     // Store the new results in the cache.
@@ -66,6 +70,7 @@ pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
     Ok(Json(items))
 }
 
+#[tracing::instrument(err)]
 async fn fetch_library_items() -> Result<Vec<LibraryItem>, Error> {
     // Load environment variables.
     let key_json_base64 = std::env::var("GOOGLE_SERVICE_ACCOUNT_KEY")?;
@@ -131,7 +136,7 @@ fn parse_rows(rows: &[Vec<serde_json::Value>]) -> Result<Vec<LibraryItem>, Error
     let available_idx = find_col("available")?;
 
     // Map the rows into `LibraryItem` instances.
-    let items = rows[1..]
+    let items: Vec<_> = rows[1..]
         .iter()
         // We only return items that have a valid `item` value.
         .filter_map(|row| {
@@ -144,6 +149,8 @@ fn parse_rows(rows: &[Vec<serde_json::Value>]) -> Result<Vec<LibraryItem>, Error
             ))
         })
         .collect();
+
+    info!("fetched {} items", items.len());
 
     Ok(items)
 }

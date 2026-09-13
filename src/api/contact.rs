@@ -9,7 +9,7 @@ use webhook::client::WebhookClient;
 
 use crate::domain::contact::{ContactEmail, ContactMessage, ContactName, ContactSubject};
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Body {
     name: ContactName,
     email: ContactEmail,
@@ -17,6 +17,7 @@ pub struct Body {
     message: ContactMessage,
 }
 
+#[tracing::instrument(ret, err)]
 pub async fn handler(Json(body): Json<Body>) -> Result<StatusCode, Error> {
     let url = std::env::var("WEBHOOK_URL")?;
 
@@ -41,6 +42,7 @@ pub async fn handler(Json(body): Json<Body>) -> Result<StatusCode, Error> {
 pub enum Error {
     #[error("webhook error")]
     WebhookError(#[from] Box<dyn std::error::Error + Send + Sync>),
+
     #[error("environment error")]
     EnvironmentError(#[from] std::env::VarError),
 }
