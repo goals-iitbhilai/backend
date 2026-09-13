@@ -11,9 +11,15 @@ path = "src/lib.rs"
 name = "contact"
 path = "api/contact.rs"
 
+[[bin]]
+name = "library"
+path = "api/library.rs"
+
 [dependencies]
+yup-oauth2 = { version = "12", features = ["service-account"] }
 axum = "0.8.9"
 chrono = "0.4.44"
+google-sheets4 = "7.0.0"
 http = "1.4.0"
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.149"
@@ -24,6 +30,7 @@ tower-http = { version = "0.6.10", features = ["cors"] }
 validator = "0.16.1"
 vercel_runtime = { version = "2.4.0", features = ["axum"] }
 webhook = "2.1.2"
+base64 = "0.23.1"
 
 [profile.release]
 opt-level = 3
