@@ -1,3 +1,4 @@
+use http::header;
 use std::{
     sync::LazyLock,
     time::{Duration, Instant},
@@ -27,7 +28,7 @@ const RANGE: &str = "books";
 //
 // This is the maximum amount of time that cached results will be returned
 // before they are refreshed.
-const CACHE_TTL: Duration = Duration::from_secs(5 * 60);
+const CACHE_TTL: Duration = Duration::from_mins(10);
 
 struct Cache {
     items: Vec<LibraryItem>,
@@ -38,7 +39,12 @@ struct Cache {
 static CACHE: LazyLock<RwLock<Option<Cache>>> = LazyLock::new(|| RwLock::new(None));
 
 #[tracing::instrument]
-pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
+pub async fn handler() -> Result<impl IntoResponse, Error> {
+    let headers = [(
+        header::CACHE_CONTROL,
+        format!("public, max-age={}", CACHE_TTL.as_secs()),
+    )];
+
     // If the last call to the Sheets API was within the TTL deadline,
     // return the cached results.
     //
@@ -50,7 +56,7 @@ pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
             && entry.fetched_at.elapsed() < CACHE_TTL
         {
             info!("serving {} items from cache", entry.items.len());
-            return Ok(Json(entry.items.clone()));
+            return Ok((headers, Json(entry.items.clone())));
         }
     }
 
@@ -67,7 +73,7 @@ pub async fn handler() -> Result<Json<Vec<LibraryItem>>, Error> {
         });
     }
 
-    Ok(Json(items))
+    Ok((headers, Json(items)))
 }
 
 #[tracing::instrument(err)]
