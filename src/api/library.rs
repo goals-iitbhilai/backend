@@ -113,6 +113,7 @@ async fn fetch_library_items() -> Result<Vec<LibraryItem>, Error> {
         .values_get(&sheet_id, RANGE)
         .doit()
         .await
+        .map_err(Box::new)
         .map_err(Error::SheetsError)?;
 
     // Parse the fetched rows into `LibraryItem` instances.
@@ -176,7 +177,7 @@ pub enum Error {
     HttpError(#[source] std::io::Error),
 
     #[error("sheets error: {0}")]
-    SheetsError(#[from] google_sheets4::Error),
+    SheetsError(#[from] Box<google_sheets4::Error>),
 
     #[error("missing '{0}' column from sheet")]
     MissingColumn(String),

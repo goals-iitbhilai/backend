@@ -22,7 +22,7 @@ impl LibraryItem {
         // Parse the `available` column as boolean, and replace unknown values with false.
         let available = available
             .and_then(|v| v.as_str())
-            .map_or(false, |v| POSTIVIES.contains(&v.to_lowercase().as_str()));
+            .is_some_and(|v| POSTIVIES.contains(&v.to_lowercase().as_str()));
 
         Self {
             item: item.to_owned(),
