@@ -16,7 +16,7 @@ name = "library"
 path = "api/library.rs"
 
 [dependencies]
-yup-oauth2 = { version = "12", features = ["service-account"] }
+yup-oauth2 = { version = "12.1.2", features = ["service-account"] }
 axum = "0.8.9"
 chrono = "0.4.44"
 google-sheets4 = "7.0.0"
