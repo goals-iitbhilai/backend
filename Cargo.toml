@@ -8,6 +8,10 @@ name = "backend"
 path = "src/lib.rs"
 
 [[bin]]
+name = "book-request"
+path = "api/book-request.rs"
+
+[[bin]]
 name = "contact"
 path = "api/contact.rs"
 
