@@ -18,7 +18,7 @@ async fn main() -> Result<(), vercel_runtime::Error> {
         .allow_headers(cors::Any);
 
     let router = Router::new()
-        .fallback(post(backend::api::contact::handler))
+        .fallback(post(backend::routes::contact::handler))
         .layer(TraceLayer::new_for_http());
 
     let app = ServiceBuilder::new()
