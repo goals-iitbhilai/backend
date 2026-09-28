@@ -3,11 +3,10 @@ use axum::{
     http::StatusCode,
     response::{IntoResponse, Response},
 };
-use chrono::Utc;
 use serde::Deserialize;
-use webhook::client::WebhookClient;
 
 use crate::domain::contact::{ContactEmail, ContactMessage, ContactName, ContactSubject};
+use crate::services::contact as service;
 
 #[derive(Deserialize, Debug)]
 pub struct Body {
@@ -19,33 +18,13 @@ pub struct Body {
 
 #[tracing::instrument(ret, err)]
 pub async fn handler(Json(body): Json<Body>) -> Result<StatusCode, Error> {
-    let url = std::env::var("CONTACT_WEBHOOK")?;
-
-    WebhookClient::new(&url)
-        .send(|msg| {
-            msg.username("Contact Form").embed(|embed| {
-                embed
-                    .title("New Message")
-                    .description(body.message.as_ref())
-                    .timestamp(&Utc::now().to_rfc3339())
-                    .author(body.name.as_ref(), None, None)
-                    .field("subject", body.subject.as_ref(), false)
-                    .field("email", body.email.as_ref(), false)
-            })
-        })
-        .await?;
-
+    service::submit(&body.name, &body.email, &body.subject, &body.message).await?;
     Ok(StatusCode::OK)
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("webhook error")]
-    WebhookError(#[from] Box<dyn std::error::Error + Send + Sync>),
-
-    #[error("environment error")]
-    EnvironmentError(#[from] std::env::VarError),
-}
+#[error(transparent)]
+pub struct Error(#[from] service::Error);
 
 impl IntoResponse for Error {
     fn into_response(self) -> Response {
