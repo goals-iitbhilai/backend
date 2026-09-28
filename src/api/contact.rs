@@ -19,7 +19,7 @@ pub struct Body {
 
 #[tracing::instrument(ret, err)]
 pub async fn handler(Json(body): Json<Body>) -> Result<StatusCode, Error> {
-    let url = std::env::var("WEBHOOK_URL")?;
+    let url = std::env::var("CONTACT_WEBHOOK")?;
 
     WebhookClient::new(&url)
         .send(|msg| {
